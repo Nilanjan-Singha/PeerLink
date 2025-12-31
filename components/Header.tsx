@@ -1,0 +1,48 @@
+"use client";
+
+import React from 'react';
+import { Flame } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
+
+const Header: React.FC = () => {
+  const { profile, openProfile } = useApp();
+
+  return (
+    <header className="px-4 md:px-12 py-6 flex items-center justify-between">
+      {/* Logo */}
+      <div className="flex items-center gap-1.5">
+        <div className="w-2.5 h-2.5 rounded-full bg-[#f472b6]" />
+        <span className="font-heading font-black text-2xl tracking-tight text-white">
+          PeerLink
+        </span>
+      </div>
+
+      {/* Online Count Pill */}
+      <div className="hidden sm:flex items-center gap-2 bg-[#1e293b]/50 border border-[#334155]/50 px-5 py-2 rounded-full backdrop-blur-sm">
+        <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+        <span className="text-emerald-500 text-xs font-bold uppercase tracking-wider">
+          1,420 Engineers Online <span className="text-white/40 ml-1">IN</span>
+        </span>
+      </div>
+
+      {/* Profile & Streak */}
+      <div 
+        onClick={openProfile}
+        className="flex items-center gap-4 bg-[#1e293b]/40 border border-[#334155]/40 p-1.5 pr-3 rounded-full cursor-pointer hover:bg-white/10 transition-colors"
+      >
+        <div className="flex items-center gap-2 bg-[#0f172a] px-3 py-1.5 rounded-full border border-white/5 shadow-inner">
+          <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
+          <div className="flex flex-col -space-y-1">
+            <span className="text-[10px] font-bold text-orange-500/80 uppercase">12</span>
+            <span className="text-[10px] font-bold text-white uppercase">Days</span>
+          </div>
+        </div>
+        <div className="w-9 h-9 rounded-full overflow-hidden border border-white/20">
+          <img src={profile.avatar} alt="avatar" className="w-full h-full object-cover" />
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Header;

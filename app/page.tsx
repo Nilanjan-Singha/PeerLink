@@ -1,65 +1,130 @@
-import Image from "next/image";
+"use client";
+
+import React from 'react';
+import { useApp } from '@/context/AppContext';
+import { TOPICS } from '@/constants';
+import Header from '@/components/Header';
+import TopicCard from '@/components/TopicCard';
+import ActionBar from '@/components/ActionBar';
+import MatchingOverlay from '@/components/MatchingOverlay';
+// import CallOverlay from '@/components/CallOverlay';
+import ProfilePage from '@/components/ProfilePage';
 
 export default function Home() {
+  const { 
+    profile, 
+    selectedTopicId, 
+    toggleTopic, 
+    isSearching, 
+    isConnected, 
+    isProfileOpen,
+    currentTopic
+  } = useApp();
+
+  // Helper to determine grid column span
+  const getColSpan = (id: string) => {
+    if (id === 'dsa' || id === 'web-dev' || id === 'chill') {
+      return 'md:col-span-2';
+    }
+    return 'md:col-span-1';
+  };
+
+  const handleBackgroundClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!selectedTopicId) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) return;
+    toggleTopic(selectedTopicId);
+  };
+
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen flex flex-col" onClick={handleBackgroundClick}>
+      {/* 1. Top Navigation */}
+      <div onClick={(e) => e.stopPropagation()}>
+        <Header />
+      </div>
+      
+      <main className="grow container mx-auto px-4 md:px-12 py-8 max-w-7xl">
+        {/* 2. Hero Section */}
+        <div className="text-center mb-12">
+          <h1 className="font-heading font-black text-4xl md:text-6xl text-white mb-4">
+            Namaste, {profile.name.split(' ')[0]}!
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+          <h2 className="font-heading font-bold text-2xl md:text-3xl text-white/70">
+            What are we discussing today?
+          </h2>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* 3. Action Control (Voice/Video toggles & Start Button) */}
+        <ActionBar />
+
+        {/* 4. Topic Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {TOPICS.map((topic) => (
+            <div key={topic.id} className={getColSpan(topic.id)}>
+              <TopicCard
+                topic={topic}
+                // We don't pass 'isSelected' or 'onClick' anymore; 
+                // TopicCard handles that via context + topic.id
+              />
+            </div>
+          ))}
         </div>
+
+        {/* 5. Community Stats Footer (Visible when idle) */}
+        {!isSearching && !isConnected && (
+          <div className="mt-24 mb-12 p-8 md:p-12 rounded-[3rem] bg-white/5 border border-white/10 flex flex-col lg:flex-row items-center justify-between gap-10 backdrop-blur-md">
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="flex -space-x-5">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <div key={i} className="w-16 h-16 rounded-full border-4 border-[#0b1120] overflow-hidden bg-slate-800 shadow-2xl transition-transform hover:-translate-y-1">
+                    <img src={`https://picsum.photos/seed/${i + 60}/100/100`} alt="engineer" className="w-full h-full object-cover" />
+                  </div>
+                ))}
+                <div className="w-16 h-16 rounded-full border-4 border-[#0b1120] bg-[#1e293b] flex items-center justify-center text-white text-sm font-bold shadow-2xl">
+                  +1.2k
+                </div>
+              </div>
+              <div className="text-center md:text-left">
+                <p className="font-heading font-black text-2xl text-white">Join the Community</p>
+                <p className="text-base text-white/50 font-medium">Over 4,200 peer sessions active right now</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-10 md:gap-16">
+              <div className="text-center">
+                <p className="text-4xl font-black text-[#c259ee] mb-1">1.2s</p>
+                <p className="text-[11px] font-bold text-white/40 uppercase tracking-[0.2em]">Avg Match</p>
+              </div>
+              <div className="w-px h-16 bg-white/10 hidden lg:block" />
+              <div className="text-center">
+                <p className="text-4xl font-black text-[#17bfec] mb-1">98%</p>
+                <p className="text-[11px] font-bold text-white/40 uppercase tracking-[0.2em]">Completion</p>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
+
+      {/* 6. Overlays (Conditional Rendering) */}
+      
+      {/* 
+         NOTE: Assuming MatchingOverlay and CallOverlay are also refactored 
+         to use 'useApp' internally for props like 'mode', 'topic', 'onCancel', etc.
+      */}
+       <div onClick={(e) => e.stopPropagation()}>
+      {isSearching && (
+        <MatchingOverlay />
+      )}
+
+      {/* {isConnected && currentTopic && (
+        <CallOverlay />
+      )} */}
+
+      {isProfileOpen && (
+        <ProfilePage />
+      )}
+      </div>
     </div>
   );
 }
