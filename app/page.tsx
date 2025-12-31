@@ -9,6 +9,7 @@ import ActionBar from '@/components/ActionBar';
 import MatchingOverlay from '@/components/MatchingOverlay';
 // import CallOverlay from '@/components/CallOverlay';
 import ProfilePage from '@/components/ProfilePage';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function Home() {
   const { 
@@ -18,8 +19,19 @@ export default function Home() {
     isSearching, 
     isConnected, 
     isProfileOpen,
-    currentTopic
+    currentTopic,
+    isLoggedIn
   } = useApp();
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  React.useEffect(() => {
+    const showOnboard = searchParams.get('show_onboard');
+    if (showOnboard === 'true' && isLoggedIn) {
+      router.replace('/onboard');
+    }
+  }, [searchParams, isLoggedIn, router]);
 
   // Helper to determine grid column span
   const getColSpan = (id: string) => {
@@ -36,94 +48,114 @@ export default function Home() {
     toggleTopic(selectedTopicId);
   };
 
-
   return (
-    <div className="min-h-screen flex flex-col" onClick={handleBackgroundClick}>
-      {/* 1. Top Navigation */}
-      <div onClick={(e) => e.stopPropagation()}>
-        <Header />
-      </div>
-      
-      <main className="grow container mx-auto px-4 md:px-12 py-8 max-w-7xl">
-        {/* 2. Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="font-heading font-black text-4xl md:text-6xl text-white mb-4">
-            Namaste, {profile.name.split(' ')[0]}!
-          </h1>
-          <h2 className="font-heading font-bold text-2xl md:text-3xl text-white/70">
-            What are we discussing today?
-          </h2>
+    <div className="min-h-screen w-full bg-black/80  relative text-white/80" onClick={handleBackgroundClick}>
+      {/* Circuit Board - Light Pattern */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{
+          backgroundImage: `
+            repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(75, 85, 99, 0.08) 19px, rgba(75, 85, 99, 0.08) 20px, transparent 20px, transparent 39px, rgba(75, 85, 99, 0.08) 39px, rgba(75, 85, 99, 0.08) 40px),
+            repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(75, 85, 99, 0.08) 19px, rgba(75, 85, 99, 0.08) 20px, transparent 20px, transparent 39px, rgba(75, 85, 99, 0.08) 39px, rgba(75, 85, 99, 0.08) 40px),
+            radial-gradient(circle at 20px 20px, rgba(55, 65, 81, 0.12) 2px, transparent 2px),
+            radial-gradient(circle at 40px 40px, rgba(55, 65, 81, 0.12) 2px, transparent 2px)
+          `,
+          backgroundSize: '40px 40px, 40px 40px, 40px 40px, 40px 40px',
+        }}
+      />
+      <div className="relative z-10 flex flex-col min-h-screen">
+        {/* 1. Top Navigation */}
+        <div onClick={(e) => e.stopPropagation()}>
+          <Header />
         </div>
-
-        {/* 3. Action Control (Voice/Video toggles & Start Button) */}
-        <ActionBar />
-
-        {/* 4. Topic Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {TOPICS.map((topic) => (
-            <div key={topic.id} className={getColSpan(topic.id)}>
-              <TopicCard
-                topic={topic}
-                // We don't pass 'isSelected' or 'onClick' anymore; 
-                // TopicCard handles that via context + topic.id
-              />
+        
+        <main className="grow container mx-auto px-4 md:px-12 py-8 max-w-7xl">
+          {/* 2. Hero Section */}
+          {isLoggedIn ? (
+            <div className="text-center mb-12">
+              <h1 className="font-heading font-black text-4xl md:text-6xl  mb-4">
+                Namaste, {profile.name.split(' ')[0]}!
+              </h1>
+              <h2 className="font-heading font-bold text-2xl md:text-3xl ">
+                What are we discussing today?
+              </h2>
             </div>
-          ))}
-        </div>
+          ) : (
+            <div className="text-center mb-12">
+              <h1 className="font-heading font-black text-4xl md:text-7xl mb-4">
+                Namaste, Bhai!
+              </h1>
+              <h2 className="font-heading font-bold text-2xl md:text-3xl ">
+                Please login or sign up to continue.
+              </h2>
+            </div>
+          )}
 
-        {/* 5. Community Stats Footer (Visible when idle) */}
-        {!isSearching && !isConnected && (
-          <div className="mt-24 mb-12 p-8 md:p-12 rounded-[3rem] bg-white/5 border border-white/10 flex flex-col lg:flex-row items-center justify-between gap-10 backdrop-blur-md">
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              <div className="flex -space-x-5">
-                {[1, 2, 3, 4, 5, 6].map(i => (
-                  <div key={i} className="w-16 h-16 rounded-full border-4 border-[#0b1120] overflow-hidden bg-slate-800 shadow-2xl transition-transform hover:-translate-y-1">
-                    <img src={`https://picsum.photos/seed/${i + 60}/100/100`} alt="engineer" className="w-full h-full object-cover" />
+          {/* 3. Action Control (Voice/Video toggles & Start Button) */}
+          <ActionBar />
+
+          {/* 4. Topic Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {TOPICS.map((topic) => (
+              <div key={topic.id} className={getColSpan(topic.id)}>
+                <TopicCard
+                  topic={topic}
+                  // We don't pass 'isSelected' or 'onClick' anymore; 
+                  // TopicCard handles that via context + topic.id
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* 5. Community Stats Footer (Visible when idle) */}
+          {!isSearching && !isConnected && (
+            <div className="mt-24 mb-12 p-8 md:p-12 rounded-[3rem] bg-white/5 border border-white/10 flex flex-col lg:flex-row items-center justify-between gap-10 backdrop-blur-md">
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                <div className="flex -space-x-5">
+                  {[1, 2, 3, 4, 5, 6].map(i => (
+                    <div key={i} className="w-16 h-16 rounded-full border-4 border-gray-200 overflow-hidden bg-slate-800 shadow-2xl transition-transform hover:-translate-y-1">
+                      <img src={`https://picsum.photos/seed/${i + 60}/100/100`} alt="engineer" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                  <div className="w-16 h-16 rounded-full border-4 border-gray-200 bg-gray-900 flex items-center justify-center text-white text-sm font-bold shadow-2xl">
+                    +1.2k
                   </div>
-                ))}
-                <div className="w-16 h-16 rounded-full border-4 border-[#0b1120] bg-[#1e293b] flex items-center justify-center text-white text-sm font-bold shadow-2xl">
-                  +1.2k
+                </div>
+                <div className="text-center md:text-left">
+                  <p className="font-heading font-black text-2xl text-gray-900">Join the Community</p>
+                  <p className="text-base text-gray-600 font-medium">Over 4,200 peer sessions active right now</p>
                 </div>
               </div>
-              <div className="text-center md:text-left">
-                <p className="font-heading font-black text-2xl text-white">Join the Community</p>
-                <p className="text-base text-white/50 font-medium">Over 4,200 peer sessions active right now</p>
+              
+              <div className="flex items-center gap-10 md:gap-16">
+                <div className="text-center">
+                  <p className="text-4xl font-black text-[#c259ee] mb-1">1.2s</p>
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em]">Avg Match</p>
+                </div>
+                <div className="w-px h-16 bg-gray-200/30 hidden lg:block" />
+                <div className="text-center">
+                  <p className="text-4xl font-black text-[#17bfec] mb-1">98%</p>
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em]">Completion</p>
+                </div>
               </div>
             </div>
-            
-            <div className="flex items-center gap-10 md:gap-16">
-              <div className="text-center">
-                <p className="text-4xl font-black text-[#c259ee] mb-1">1.2s</p>
-                <p className="text-[11px] font-bold text-white/40 uppercase tracking-[0.2em]">Avg Match</p>
-              </div>
-              <div className="w-px h-16 bg-white/10 hidden lg:block" />
-              <div className="text-center">
-                <p className="text-4xl font-black text-[#17bfec] mb-1">98%</p>
-                <p className="text-[11px] font-bold text-white/40 uppercase tracking-[0.2em]">Completion</p>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
+          )}
+        </main>
 
-      {/* 6. Overlays (Conditional Rendering) */}
-      
-      {/* 
-         NOTE: Assuming MatchingOverlay and CallOverlay are also refactored 
-         to use 'useApp' internally for props like 'mode', 'topic', 'onCancel', etc.
-      */}
-       <div onClick={(e) => e.stopPropagation()}>
-      {isSearching && (
-        <MatchingOverlay />
-      )}
+        {/* 6. Overlays (Conditional Rendering) */}
+        <div onClick={(e) => e.stopPropagation()}>
+          {isSearching && (
+            <MatchingOverlay />
+          )}
 
-      {/* {isConnected && currentTopic && (
-        <CallOverlay />
-      )} */}
+          {/* {isConnected && currentTopic && (
+            <CallOverlay />
+          )} */}
 
-      {isProfileOpen && (
-        <ProfilePage />
-      )}
+          {isProfileOpen && (
+            <ProfilePage />
+          )}
+        </div>
       </div>
     </div>
   );

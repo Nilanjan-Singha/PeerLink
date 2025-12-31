@@ -6,17 +6,19 @@ import { INITIAL_PROFILE, TOPICS } from '@/constants';
 import { useRouter } from 'next/navigation';
 
 interface AppState {
-  // State
+  // Data
   profile: UserProfile;
+  currentTopic: Topic | undefined;
+  
+  // State Flags
   selectedTopicId: TopicID | null;
   mode: ConnectionMode;
   isSearching: boolean;
   isConnected: boolean;
   isProfileOpen: boolean;
-  
-  // Computed
-  currentTopic: Topic | undefined;
-  
+  isLoggedIn: boolean; // Only keep this one for auth status
+  isOnboardingComplete: boolean;
+
   // Actions
   setProfile: (p: UserProfile) => void;
   toggleTopic: (id: TopicID) => void;
@@ -26,6 +28,10 @@ interface AppState {
   hangup: () => void;
   openProfile: () => void;
   closeProfile: () => void;
+  setIsLoggedIn: (status: boolean) => void;
+  login: () => void; // Simple action to set status to true
+  logout: () => void;
+  setIsOnboardingComplete: (status: boolean) => void;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -37,6 +43,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isSearching, setIsSearching] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
+
 
   const router = useRouter(); 
 
@@ -45,27 +54,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let timer: NodeJS.Timeout;
     if (isSearching) {
       timer = setTimeout(() => {
-        setIsSearching(false);
-        setIsConnected(true);
-        router.push('/connect');
-      }, 3500);
+        if (selectedTopicId) {
+            setIsSearching(false);
+            const userName = profile.name || "Guest";
+            router.push(`/connect?topic=${selectedTopicId}&username=${encodeURIComponent(userName)}`);
+        } else {
+            setIsSearching(false);
+        }
+      }, 5000);
     }
     return () => clearTimeout(timer);
-  }, [isSearching]);
+  }, [isSearching, profile, selectedTopicId, router]);
 
   // Actions
   const toggleTopic = (id: TopicID) => setSelectedTopicId(prev => prev === id ? null : id);
-  
-  const startSearch = useCallback(() => {
-    if (selectedTopicId) setIsSearching(true);
-  }, [selectedTopicId]);
-
+  const startSearch = useCallback(() => { if (selectedTopicId) setIsSearching(true); }, [selectedTopicId]);
   const cancelSearch = () => setIsSearching(false);
+  const hangup = () => { setIsConnected(false); setSelectedTopicId(null); };
   
-  const hangup = () => {
-    setIsConnected(false);
-    setSelectedTopicId(null);
-  };
+  // Auth Helpers
+  const login = () => setIsLoggedIn(true);
+  const logout = () => setIsLoggedIn(false);
 
   const currentTopic = TOPICS.find(t => t.id === selectedTopicId);
 
@@ -77,6 +86,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       isSearching, startSearch, cancelSearch,
       isConnected, hangup,
       isProfileOpen, openProfile: () => setIsProfileOpen(true), closeProfile: () => setIsProfileOpen(false),
+      isLoggedIn, login, logout,setIsLoggedIn,
+      isOnboardingComplete, setIsOnboardingComplete,
       currentTopic
     }}>
       {children}
