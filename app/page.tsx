@@ -10,8 +10,9 @@ import MatchingOverlay from '@/components/MatchingOverlay';
 // import CallOverlay from '@/components/CallOverlay';
 import ProfilePage from '@/components/ProfilePage';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function Home() {
+function HomeContent() {
   const { 
     profile, 
     selectedTopicId, 
@@ -158,5 +159,12 @@ export default function Home() {
         </div>
       </div>
     </div>
+  );
+}
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black/80" />}>
+      <HomeContent />
+    </Suspense>
   );
 }
