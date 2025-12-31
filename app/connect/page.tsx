@@ -1,26 +1,21 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   LiveKitRoom, 
-  RoomAudioRenderer, 
-  ControlBar, 
-  GridLayout, 
-  ParticipantTile, 
-  useTracks 
+  RoomAudioRenderer 
 } from '@livekit/components-react';
-import { Track } from 'livekit-client';
 import '@livekit/components-styles';
-import { Loader2, PhoneOff } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { getConnectionToken } from '../../context/LivekitContext';
 import CallHeader from '../../components/Livekit/CustomHeader';
 import { CustomVideoGrid } from '../../components/Livekit/VideoGrid';
 import { CustomControls } from '../../components/Livekit/CustomControls';
 
-export default function ConnectPage() {
+function ConnectContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); //  build error if not suspended
   
   const topicId = searchParams.get('topic'); 
   const username = searchParams.get('username');
@@ -48,35 +43,50 @@ export default function ConnectPage() {
     fetchToken();
   }, [topicId, username, router]);
 
+  // Loading State (while token is fetching)
   if (!token) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#0b1120] text-white">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-[#c259ee]" />
-          <p className="text-sm font-bold uppercase tracking-widest opacity-50">Finding available room...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Finding available room..." />;
   }
 
   return (
     <div className="h-screen w-full bg-[#0b1120]" data-lk-theme="default">
       <LiveKitRoom
-  audio
-  video
-  token={token}
-  serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
-  onDisconnected={() => router.push('/')}
-  className="h-screen w-screen bg-[#0b1120] relative"
->
-  <CallHeader topic={topicId!} room={assignedRoom} />
+        audio
+        video
+        token={token}
+        serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+        onDisconnected={() => router.push('/')}
+        className="h-screen w-screen bg-[#0b1120] relative"
+      >
+        <CallHeader topic={topicId!} room={assignedRoom} />
 
-  <CustomVideoGrid />
+        <CustomVideoGrid />
 
-  <CustomControls onLeave={() => router.push('/')} />
+        <CustomControls onLeave={() => router.push('/')} />
 
-  <RoomAudioRenderer />
-</LiveKitRoom>
+        <RoomAudioRenderer />
+      </LiveKitRoom>
     </div>
+  );
+}
+
+//  Loading Component
+function LoadingScreen({ message }: { message: string }) {
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-[#0b1120] text-white">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-[#c259ee]" />
+        <p className="text-sm font-bold uppercase tracking-widest opacity-50">{message}</p>
+      </div>
+    </div>
+  );
+}
+
+// 3. The Main Page Export (Wraps logic in Suspense)
+export default function ConnectPage() {
+  return (
+    <Suspense fallback={<LoadingScreen message="Initializing connection..." />}>
+      <ConnectContent />
+    </Suspense>
   );
 }
