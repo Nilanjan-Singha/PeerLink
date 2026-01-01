@@ -9,10 +9,12 @@ import { useApp } from '@/context/AppContext';
 import { TOPICS } from '@/constants';
 import { ExpertiseLevel, TopicID, UserProfile } from '@/types';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 const ProfilePage: React.FC = () => {
-  const { profile, setProfile, setIsLoggedIn } = useApp();
+  const { profile, setProfile } = useApp();
   const router = useRouter();
+  const { logout } = useAuth();
   
   // Local state for editing form
   const [editedProfile, setEditedProfile] = useState<UserProfile>(profile);
@@ -58,7 +60,7 @@ const ProfilePage: React.FC = () => {
           <Save className="w-4 h-4" />
           Save Changes
         </button>
-        <button onClick={() => {setIsLoggedIn(false); router.back()}} className='px-6 py-2.5 rounded-xl font-bold text-sm hover:scale-105 active:scale-95 transition-all cursor-pointer'> Logout</button>
+        <button onClick={logout} className='px-6 py-2.5 rounded-xl font-bold text-sm hover:scale-105 active:scale-95 transition-all cursor-pointer'> Logout</button>
       </div>
       </div>
 
