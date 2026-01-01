@@ -11,15 +11,21 @@ interface OnboardingAcknowledgeProps {
 }
 
 const OnboardingAcknowledge: React.FC<OnboardingAcknowledgeProps> = () => {
-  const { setIsOnboardingComplete } = useApp();
+  const {isOnboardingComplete, setIsOnboardingComplete } = useApp();
+
   const [ischecked, setIsChecked] = useState(false);
   const router = useRouter();
+
+   if (isOnboardingComplete) {
+    return null;
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsOnboardingComplete(true);
+
     // close modal
-    router.back(); 
+    router.replace('/'); 
   };
 
   return (

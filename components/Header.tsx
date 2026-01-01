@@ -4,9 +4,11 @@ import React from 'react';
 import { Flame, LogIn } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useRouter } from 'next/navigation'; // Import router here
+import { useAuth } from '@/context/AuthContext';
 
 const Header: React.FC = () => {
-  const { profile,  isLoggedIn } = useApp(); // Destructure what we actually need
+  const { profile } = useApp(); 
+  const { isLoggedIn } = useAuth();
   const router = useRouter();
 
   return (

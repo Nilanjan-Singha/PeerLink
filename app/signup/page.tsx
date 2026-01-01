@@ -5,27 +5,31 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { X, ArrowRight, Fingerprint, Github, Chrome } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function SignupPage() {
   const router = useRouter();
+  const { signUpWithEmail, loginWithProvider } = useAuth();
   const { setProfile, profile } = useApp();
   const [loading, setLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState("");
   const [fullName, setFullName] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
-    setTimeout(() => {
+    setErrorMsg("");
+
+    const { error } = await signUpWithEmail(email, password, fullName);
+
+    if (error) {
+      setErrorMsg(error.message);
       setLoading(false);
-      // Update global context with new user name
-      setProfile({
-        ...profile,
-        name: fullName, 
-        headline: "New Explorer"
-      });
-      router.push('/?show_onboard=true');
-    }, 1200);
+    } else {
+      setLoading(false);
+      router.push('/'); 
+    }
   };
 
   return (
@@ -108,10 +112,10 @@ export default function SignupPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <button className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-zinc-950 border border-zinc-800 hover:bg-zinc-900 h-10 text-white">
-                <Github className="mr-2 h-4 w-4" /> Github
+              <button onClick={()=>{loginWithProvider('github')}} className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-zinc-950 border border-zinc-800 hover:bg-zinc-900 h-10 text-white">
+                <Github  className="mr-2 h-4 w-4" /> Github
               </button>
-              <button className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-zinc-950 border border-zinc-800 hover:bg-zinc-900 h-10 text-white">
+              <button onClick={()=>{loginWithProvider('google')}} className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-zinc-950 border border-zinc-800 hover:bg-zinc-900 h-10 text-white">
                 <Chrome className="mr-2 h-4 w-4" /> Google
               </button>
             </div>

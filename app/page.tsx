@@ -11,6 +11,7 @@ import MatchingOverlay from '@/components/MatchingOverlay';
 import ProfilePage from '@/components/ProfilePage';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 function HomeContent() {
   const { 
@@ -20,20 +21,21 @@ function HomeContent() {
     isSearching, 
     isConnected, 
     currentTopic,
-    isLoggedIn
   } = useApp();
+
+  const { isLoggedIn, isLoading } = useAuth();
 
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  React.useEffect(() => {
+React.useEffect(() => {
     const showOnboard = searchParams.get('show_onboard');
-    if (showOnboard === 'true' && isLoggedIn) {
-      router.replace('/onboard');
+    if (!isLoading && isLoggedIn && showOnboard === 'true') {
+       router.push('/onboard');
     }
-  }, [searchParams, isLoggedIn, router]);
+  }, [searchParams, isLoggedIn, isLoading, router]);
 
-  // Helper to determine grid column span
+
   const getColSpan = (id: string) => {
     if (id === 'dsa' || id === 'web-dev' || id === 'chill') {
       return 'md:col-span-2';

@@ -4,21 +4,21 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { TopicID, ConnectionMode, UserProfile, Topic } from '@/types';
 import { INITIAL_PROFILE, TOPICS } from '@/constants';
 import { useRouter } from 'next/navigation';
+import { useAuth } from './AuthContext'; // Import the new hook
+
 
 interface AppState {
-  // Data
   profile: UserProfile;
-  currentTopic: Topic | undefined;
-  
-  // State Flags
   selectedTopicId: TopicID | null;
   mode: ConnectionMode;
   isSearching: boolean;
   isConnected: boolean;
   isProfileOpen: boolean;
-  isLoggedIn: boolean; // Only keep this one for auth status
   isOnboardingComplete: boolean;
-
+  
+  // Computed
+  currentTopic: Topic | undefined;
+  
   // Actions
   setProfile: (p: UserProfile) => void;
   toggleTopic: (id: TopicID) => void;
@@ -26,28 +26,41 @@ interface AppState {
   startSearch: () => void;
   cancelSearch: () => void;
   hangup: () => void;
-  setIsLoggedIn: (status: boolean) => void;
-  login: () => void; // Simple action to set status to true
-  logout: () => void;
-  setIsOnboardingComplete: (status: boolean) => void;
+  openProfile: () => void;
+  closeProfile: () => void;
+  setIsOnboardingComplete: (complete: boolean) => void;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  // Access Auth Context
+  const { user } = useAuth();
+  
   const [profile, setProfile] = useState<UserProfile>(INITIAL_PROFILE);
   const [selectedTopicId, setSelectedTopicId] = useState<TopicID | null>(null);
   const [mode, setMode] = useState<ConnectionMode>('voice');
   const [isSearching, setIsSearching] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
-
 
   const router = useRouter(); 
 
-  // Search Simulation Logic
+  // Sync Auth User to App Profile
+  useEffect(() => {
+    if (user) {
+      setProfile(prev => ({
+        ...prev,
+        name: user.user_metadata.full_name || user.email?.split('@')[0] || "User",
+        avatar: user.user_metadata.avatar_url || prev.avatar,
+      }));
+    } else {
+      setProfile(INITIAL_PROFILE);
+    }
+  }, [user]);
+
+  // ... (Keep your Search Simulation Logic) ...
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (isSearching) {
@@ -64,21 +77,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, [isSearching, profile, selectedTopicId, router]);
 
-  // Actions
+  // ... (Keep your existing toggleTopic, startSearch, etc.) ...
   const toggleTopic = (id: TopicID) => setSelectedTopicId(prev => prev === id ? null : id);
-  const startSearch = useCallback(() => {
-    // check user is logged in or not
-    if (!isLoggedIn) {
-      router.push('/login');
-      return;
-    }
-    if (selectedTopicId) setIsSearching(true); }, [selectedTopicId, isLoggedIn]);
+  const startSearch = useCallback(() => { if (selectedTopicId) setIsSearching(true); }, [selectedTopicId]);
   const cancelSearch = () => setIsSearching(false);
   const hangup = () => { setIsConnected(false); setSelectedTopicId(null); };
-  
-  // Auth Helpers
-  const login = () => setIsLoggedIn(true);
-  const logout = () => setIsLoggedIn(false);
 
   const currentTopic = TOPICS.find(t => t.id === selectedTopicId);
 
@@ -89,8 +92,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       mode, setMode,
       isSearching, startSearch, cancelSearch,
       isConnected, hangup,
-      isProfileOpen, 
-      isLoggedIn, login, logout,setIsLoggedIn,
+      isProfileOpen, openProfile: () => setIsProfileOpen(true), closeProfile: () => setIsProfileOpen(false),
       isOnboardingComplete, setIsOnboardingComplete,
       currentTopic
     }}>

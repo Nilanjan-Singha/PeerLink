@@ -3,50 +3,39 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { X, ArrowRight, Fingerprint, Github, Chrome } from 'lucide-react';
+import { X, ArrowRight, Fingerprint, Github, Chrome, AlertCircle } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setProfile, profile, setIsLoggedIn, isLoggedIn } = useApp();
+  const { signInWithEmail, loginWithProvider, isLoggedIn } = useAuth();
+  const { setProfile, profile } = useApp();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
-    if (isLoggedIn) {
-    return null; 
-  }
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+    if (isLoggedIn) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API Login
-    setTimeout(() => {
+    const { error } = await signInWithEmail(email, password);
+    if (error) {
+      console.error("Login failed:", error);
+      setErrorMsg("Login failed. Please check your credentials.");
       setLoading(false);
-      // In a real app, you'd fetch the user data here.
-      // We keep the existing profile for now.
-      // demo login
-      if (email === "aryan@gmail.com" && password === "peerlink") {
-        setProfile({
-          ...profile,
-          name: "Aryan Singh",
-          headline: "Full-Stack Developer"
-        });
-        setIsLoggedIn(true);
-        router.replace('/?show_onboard=true');
-        return;
-      }
-      setProfile({
-        ...profile,
-        // Example: Update name if needed from backend
-        headline: "Logged in Engineer"
-      });
-      setIsLoggedIn(true);
-      router.push('/onboard'); // Route to onboarding after login
-    }, 1200);
+      return;
+    }
+    setLoading(false);
+
   };
 
   return (
+
     <div className="fixed inset-0 z-20 bg-black/10 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
       {/* Background Glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -84,6 +73,14 @@ export default function LoginPage() {
                 Register
               </Link>
             </div>
+
+             {errorMsg && (
+              <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center gap-2 text-red-400 text-xs font-bold">
+                <AlertCircle className="w-4 h-4" />
+                {errorMsg}
+              </div>
+            )}
+
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -127,10 +124,10 @@ export default function LoginPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <button className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-zinc-950 border border-zinc-800 hover:bg-zinc-900 h-10 text-white">
+              <button onClick={() => loginWithProvider("github")} className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-zinc-950 border border-zinc-800 hover:bg-zinc-900 h-10 text-white">
                 <Github className="mr-2 h-4 w-4" /> Github
               </button>
-              <button className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-zinc-950 border border-zinc-800 hover:bg-zinc-900 h-10 text-white">
+              <button onClick={() => loginWithProvider("google")} className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-zinc-950 border border-zinc-800 hover:bg-zinc-900 h-10 text-white">
                 <Chrome className="mr-2 h-4 w-4" /> Google
               </button>
             </div>
