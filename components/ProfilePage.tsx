@@ -41,11 +41,6 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-30 bg-[#0b0b0b] flex flex-col overflow-hidden animate-in fade-in duration-300">
-      {/* Mesh Background */}
-      {/* <div className="absolute inset-0 pointer-events-none opacity-10">
-        <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-[#c259ee] rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[50%] h-[50%] bg-[#17bfec] rounded-full blur-[120px]" />
-      </div> */}
 
       {/* Header */}
       <div className="relative z-10 px-6 py-4 border-b border-white/5 bg-[#0b0b0b] backdrop-blur-md flex items-center justify-between">
