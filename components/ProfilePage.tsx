@@ -8,9 +8,11 @@ import {
 import { useApp } from '@/context/AppContext';
 import { TOPICS } from '@/constants';
 import { ExpertiseLevel, TopicID, UserProfile } from '@/types';
+import { useRouter } from 'next/navigation';
 
 const ProfilePage: React.FC = () => {
-  const { profile, setProfile, closeProfile } = useApp();
+  const { profile, setProfile, setIsLoggedIn } = useApp();
+  const router = useRouter();
   
   // Local state for editing form
   const [editedProfile, setEditedProfile] = useState<UserProfile>(profile);
@@ -34,32 +36,35 @@ const ProfilePage: React.FC = () => {
 
   const handleSave = () => {
     setProfile(editedProfile);
-    closeProfile();
+    router.back(); 
   };
 
   return (
-    <div className="fixed inset-0 z-30 bg-[#0b1120] flex flex-col overflow-hidden animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-30 bg-[#0b0b0b] flex flex-col overflow-hidden animate-in fade-in duration-300">
       {/* Mesh Background */}
-      <div className="absolute inset-0 pointer-events-none opacity-10">
+      {/* <div className="absolute inset-0 pointer-events-none opacity-10">
         <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-[#c259ee] rounded-full blur-[120px]" />
         <div className="absolute bottom-0 left-0 w-[50%] h-[50%] bg-[#17bfec] rounded-full blur-[120px]" />
-      </div>
+      </div> */}
 
       {/* Header */}
-      <div className="relative z-10 px-6 py-4 border-b border-white/5 bg-[#0f172a]/80 backdrop-blur-md flex items-center justify-between">
+      <div className="relative z-10 px-6 py-4 border-b border-white/5 bg-[#0b0b0b] backdrop-blur-md flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={closeProfile} className="p-2 hover:bg-white/5 rounded-full transition-colors">
+          <button onClick={() => router.back()} className="p-2 hover:bg-white/5 rounded-full transition-colors cursor-pointer">
             <X className="w-6 h-6 text-white/50" />
           </button>
           <h2 className="font-heading font-black text-xl text-white">Edit Profile</h2>
         </div>
+        <div className="flex items-center gap-2">
         <button 
           onClick={handleSave}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-full start-button-gradient text-white font-bold text-sm hover:scale-105 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-zinc-750 text-white font-bold text-sm hover:scale-105 active:scale-95 transition-all cursor-pointer"
         >
           <Save className="w-4 h-4" />
           Save Changes
         </button>
+        <button onClick={() => {setIsLoggedIn(false); router.back()}} className='px-6 py-2.5 rounded-xl font-bold text-sm hover:scale-105 active:scale-95 transition-all cursor-pointer'> Logout</button>
+      </div>
       </div>
 
       {/* Content */}
@@ -67,17 +72,17 @@ const ProfilePage: React.FC = () => {
         <div className="max-w-4xl mx-auto space-y-8 pb-12">
           
           {/* Section 1: Basic Info */}
-          <section className="bg-white/5 border border-white/5 rounded-[2.5rem] p-8">
+          <section className="bg-blue-900 border border-white/5 rounded-[2.5rem] p-8">
             <div className="flex items-center gap-3 mb-8">
               <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400">
                 <User className="w-5 h-5" />
               </div>
-              <h3 className="font-heading font-bold text-xl text-white">Basic Information</h3>
+              <h3 className="font-heading font-bold text-xl ">Basic Information</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Full Name</label>
+                <label className="text-[10px] font-bold  uppercase tracking-widest ml-1">Full Name</label>
                 <input 
                   type="text" 
                   value={editedProfile.name}
@@ -136,7 +141,7 @@ const ProfilePage: React.FC = () => {
           </section>
 
           {/* Section 2: Links */}
-          <section className="bg-white/5 border border-white/5 rounded-[2.5rem] p-8">
+          <section className="bg-purple-900 border border-white/5 rounded-[2.5rem] p-8">
             <div className="flex items-center gap-3 mb-8">
               <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400">
                 <LinkIcon className="w-5 h-5" />
@@ -189,7 +194,7 @@ const ProfilePage: React.FC = () => {
           </section>
 
           {/* Section 3: Expertise */}
-          <section className="bg-white/5 border border-white/5 rounded-[2.5rem] p-8">
+          <section className="bg-green-950 border border-white/5 rounded-[2.5rem] p-8">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400">

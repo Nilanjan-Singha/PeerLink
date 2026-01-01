@@ -41,7 +41,7 @@ const Header: React.FC = () => {
 
         { isLoggedIn && (
         <div 
-          onClick={openProfile}
+          onClick={() => {router.push("/profile")}}
           className="flex items-center gap-4 bg-[#1e293b]/40 border border-[#334155]/40 p-1.5 pr-3 rounded-full cursor-pointer hover:bg-white/10 transition-colors"
         >
           {/* {isLoggedIn && (

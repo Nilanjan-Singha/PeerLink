@@ -26,8 +26,6 @@ interface AppState {
   startSearch: () => void;
   cancelSearch: () => void;
   hangup: () => void;
-  openProfile: () => void;
-  closeProfile: () => void;
   setIsLoggedIn: (status: boolean) => void;
   login: () => void; // Simple action to set status to true
   logout: () => void;
@@ -68,7 +66,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Actions
   const toggleTopic = (id: TopicID) => setSelectedTopicId(prev => prev === id ? null : id);
-  const startSearch = useCallback(() => { if (selectedTopicId) setIsSearching(true); }, [selectedTopicId]);
+  const startSearch = useCallback(() => {
+    // check user is logged in or not
+    if (!isLoggedIn) {
+      router.push('/login');
+      return;
+    }
+    if (selectedTopicId) setIsSearching(true); }, [selectedTopicId, isLoggedIn]);
   const cancelSearch = () => setIsSearching(false);
   const hangup = () => { setIsConnected(false); setSelectedTopicId(null); };
   
@@ -85,7 +89,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       mode, setMode,
       isSearching, startSearch, cancelSearch,
       isConnected, hangup,
-      isProfileOpen, openProfile: () => setIsProfileOpen(true), closeProfile: () => setIsProfileOpen(false),
+      isProfileOpen, 
       isLoggedIn, login, logout,setIsLoggedIn,
       isOnboardingComplete, setIsOnboardingComplete,
       currentTopic

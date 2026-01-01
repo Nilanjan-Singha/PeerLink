@@ -19,7 +19,6 @@ function HomeContent() {
     toggleTopic, 
     isSearching, 
     isConnected, 
-    isProfileOpen,
     currentTopic,
     isLoggedIn
   } = useApp();
@@ -153,9 +152,6 @@ function HomeContent() {
             <CallOverlay />
           )} */}
 
-          {isProfileOpen && (
-            <ProfilePage />
-          )}
         </div>
       </div>
     </div>
