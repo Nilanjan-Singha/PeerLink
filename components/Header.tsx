@@ -6,7 +6,7 @@ import { useApp } from '@/context/AppContext';
 import { useRouter } from 'next/navigation'; // Import router here
 
 const Header: React.FC = () => {
-  const { profile, openProfile, isLoggedIn } = useApp(); // Destructure what we actually need
+  const { profile,  isLoggedIn } = useApp(); // Destructure what we actually need
   const router = useRouter();
 
   return (
