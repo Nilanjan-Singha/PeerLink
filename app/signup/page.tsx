@@ -14,6 +14,8 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
 
    const handleSubmit = async (e: React.FormEvent) => {
@@ -83,6 +85,8 @@ export default function SignupPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none text-zinc-300">Email</label>
                 <input 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required type="email" placeholder="name@example.com"
                   className="flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:outline-none transition-all"
                 />
@@ -91,6 +95,8 @@ export default function SignupPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none text-zinc-300">Password</label>
                 <input 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required type="password" placeholder="••••••••"
                   className="flex h-10 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white focus-visible:ring-2 focus-visible:ring-zinc-700 focus-visible:outline-none transition-all"
                 />
