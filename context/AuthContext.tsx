@@ -4,17 +4,22 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, AuthError, Session } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
+import { UserProfile } from "@/types"; 
+
 
 interface AuthState {
   user: User | null;
   isLoggedIn: boolean;
   isLoading: boolean;
-  
+  dbProfile: UserProfile | null; 
+
   // Actions
   loginWithProvider: (provider: "github" | "google") => Promise<void>;
   signUpWithEmail: (email: string, password: string, fullName: string) => Promise<{ error: AuthError | null }>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   logout: () => Promise<void>;
+  updateProfile: (updatedProfile: UserProfile) => Promise<{ error: any }>;
+
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -26,10 +31,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   const [user, setUser] = useState<User | null>(null);
+    const [dbProfile, setDbProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+
+    // DB functions
+  const fetchProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (data) {
+      setDbProfile({
+        name: data.full_name || "",
+        avatar: data.avatar_url || "",
+        headline: data.headline || "",
+        college: data.college || "",
+        gradYear: data.grad_year || "",
+        jobRole: data.job_role || "",
+        expertise: data.expertise || {},
+        links: {
+          github: data.github_url || "",
+          linkedin: data.linkedin_url || "",
+          x: data.twitter_url || "",
+          website: data.website_url || ""
+        }
+      });
+    }
+  };
+
+
+
   useEffect(() => {
-    // 1. Check active session on mount
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -43,7 +78,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     checkSession();
 
-    // 2. Listen for changes (login, logout, auto-refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -58,6 +92,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase, router]);
 
   // --- ACTIONS ---
+
+    const updateProfile = async (updatedProfile: UserProfile) => {
+    if (!user) return { error: "No user logged in" };
+
+    // Update Supabase DB
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        full_name: updatedProfile.name,
+        headline: updatedProfile.headline,
+        college: updatedProfile.college,
+        grad_year: updatedProfile.gradYear,
+        job_role: updatedProfile.jobRole,
+        expertise: updatedProfile.expertise,
+        github_url: updatedProfile.links.github,
+        linkedin_url: updatedProfile.links.linkedin,
+        twitter_url: updatedProfile.links.x,
+        website_url: updatedProfile.links.website,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+
+    if (!error) {
+      // Update local state immediately for UI responsiveness
+      setDbProfile(updatedProfile);
+    }
+
+    return { error };
+  };
+
 
   const loginWithProvider = async (provider: "github" | "google") => {
     // FIX 2: Ensure we are in the browser before accessing window
@@ -112,6 +176,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isLoggedIn: !!user,
         isLoading,
+        dbProfile,
+        updateProfile,
         loginWithProvider,
         signUpWithEmail,
         signInWithEmail,

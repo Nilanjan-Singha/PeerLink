@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { TopicID, ConnectionMode, UserProfile, Topic } from '@/types';
 import { INITIAL_PROFILE, TOPICS } from '@/constants';
 import { useRouter } from 'next/navigation';
-import { useAuth } from './AuthContext'; // Import the new hook
+import { useAuth } from './AuthContext'; 
 
 
 interface AppState {
@@ -16,7 +16,6 @@ interface AppState {
   isProfileOpen: boolean;
   isOnboardingComplete: boolean;
   
-  // Computed
   currentTopic: Topic | undefined;
   
   // Actions
@@ -34,8 +33,7 @@ interface AppState {
 const AppContext = createContext<AppState | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  // Access Auth Context
-  const { user } = useAuth();
+  const { user, dbProfile } = useAuth();
   
   const [profile, setProfile] = useState<UserProfile>(INITIAL_PROFILE);
   const [selectedTopicId, setSelectedTopicId] = useState<TopicID | null>(null);
@@ -49,16 +47,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Sync Auth User to App Profile
   useEffect(() => {
-    if (user) {
+    if (user && dbProfile) {
+      setProfile(dbProfile);
+    } else if (user) {
       setProfile(prev => ({
         ...prev,
-        name: user.user_metadata.full_name || user.email?.split('@')[0] || "User",
-        avatar: user.user_metadata.avatar_url || prev.avatar,
+        name: dbProfile?.name || user.user_metadata.full_name || user.email?.split('@')[0] || "User",
+        avatar: dbProfile?.avatar || user.user_metadata.avatar_url || prev.avatar,
       }));
     } else {
       setProfile(INITIAL_PROFILE);
     }
-  }, [user]);
+  }, [user, dbProfile]);
 
   // ... (Keep your Search Simulation Logic) ...
   useEffect(() => {
@@ -77,7 +77,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, [isSearching, profile, selectedTopicId, router]);
 
-  // ... (Keep your existing toggleTopic, startSearch, etc.) ...
   const toggleTopic = (id: TopicID) => setSelectedTopicId(prev => prev === id ? null : id);
   const startSearch = useCallback(() => { if (selectedTopicId) setIsSearching(true); }, [selectedTopicId]);
   const cancelSearch = () => setIsSearching(false);
