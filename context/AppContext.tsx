@@ -1,11 +1,11 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { TopicID, ConnectionMode, UserProfile, Topic } from '@/types';
 import { INITIAL_PROFILE, TOPICS } from '@/constants';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './AuthContext'; 
-
+import { toast } from 'sonner';
 
 interface AppState {
   profile: UserProfile;
@@ -19,7 +19,7 @@ interface AppState {
   currentTopic: Topic | undefined;
   
   // Actions
-  setProfile: (p: UserProfile) => void;
+  setProfile: (p: UserProfile | ((prev: UserProfile) => UserProfile)) => void; // Update type to allow updater function
   toggleTopic: (id: TopicID) => void;
   setMode: (m: ConnectionMode) => void;
   startSearch: () => void;
@@ -33,7 +33,7 @@ interface AppState {
 const AppContext = createContext<AppState | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const { user, dbProfile } = useAuth();
+  const { user, dbProfile, isLoading:  isAuthLoading, isLoggedIn } = useAuth();
   
   const [profile, setProfile] = useState<UserProfile>(INITIAL_PROFILE);
   const [selectedTopicId, setSelectedTopicId] = useState<TopicID | null>(null);
@@ -45,44 +45,73 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const router = useRouter(); 
 
-  // Sync Auth User to App Profile
+  // sync profile with auth and dbProfile
   useEffect(() => {
-    if (user && dbProfile) {
+    if (dbProfile) {
       setProfile(dbProfile);
-    } else if (user) {
+    } 
+    else if (user && !isAuthLoading) {
       setProfile(prev => ({
         ...prev,
-        name: dbProfile?.name || user.user_metadata.full_name || user.email?.split('@')[0] || "User",
-        avatar: dbProfile?.avatar || user.user_metadata.avatar_url || prev.avatar,
+        name: user.user_metadata.full_name || user.email?.split('@')[0] || "User",
+        avatar: user.user_metadata.avatar_url || prev.avatar,
       }));
-    } else {
+    } 
+    else if (!user && !isAuthLoading) {
       setProfile(INITIAL_PROFILE);
     }
-  }, [user, dbProfile]);
+  }, [user, dbProfile, isAuthLoading]);
 
-  // ... (Keep your Search Simulation Logic) ...
   useEffect(() => {
     let timer: NodeJS.Timeout;
+    
     if (isSearching) {
+      if (!selectedTopicId) {
+        setIsSearching(false);
+        return;
+      }
+
       timer = setTimeout(() => {
-        if (selectedTopicId) {
-            setIsSearching(false);
-            const userName = profile.name || "Guest";
-            router.push(`/connect?topic=${selectedTopicId}&username=${encodeURIComponent(userName)}`);
-        } else {
-            setIsSearching(false);
-        }
+        setIsSearching(false);
+        const userName = profile.name || "Guest";
+        router.push(`/connect?topic=${selectedTopicId}&username=${encodeURIComponent(userName)}`);
       }, 5000);
     }
+    
     return () => clearTimeout(timer);
-  }, [isSearching, profile, selectedTopicId, router]);
+  }, [isSearching, selectedTopicId, profile.name, router]);
 
-  const toggleTopic = (id: TopicID) => setSelectedTopicId(prev => prev === id ? null : id);
-  const startSearch = useCallback(() => { if (selectedTopicId) setIsSearching(true); }, [selectedTopicId]);
-  const cancelSearch = () => setIsSearching(false);
-  const hangup = () => { setIsConnected(false); setSelectedTopicId(null); };
+  // actions
+  
+  const toggleTopic = useCallback((id: TopicID) => {
+    setSelectedTopicId(prev => prev === id ? null : id);
+  }, []);
 
-  const currentTopic = TOPICS.find(t => t.id === selectedTopicId);
+ const startSearch = useCallback(() => { 
+    if (!isLoggedIn) {
+      toast.error("Please login to start matching!");
+      return;
+    }
+    if (!selectedTopicId) {
+      toast.error("Please select a topic first.");
+      return;
+    }
+    setIsSearching(true); 
+  }, [selectedTopicId, isLoggedIn]);
+
+  const cancelSearch = useCallback(() => setIsSearching(false), []);
+  
+  const hangup = useCallback(() => { 
+    setIsConnected(false); 
+    setSelectedTopicId(null); 
+  }, []);
+
+  const openProfile = useCallback(() => setIsProfileOpen(true), []);
+  const closeProfile = useCallback(() => setIsProfileOpen(false), []);
+
+  const currentTopic = useMemo(() => 
+    TOPICS.find(t => t.id === selectedTopicId), 
+  [selectedTopicId]);
 
   return (
     <AppContext.Provider value={{
@@ -91,7 +120,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       mode, setMode,
       isSearching, startSearch, cancelSearch,
       isConnected, hangup,
-      isProfileOpen, openProfile: () => setIsProfileOpen(true), closeProfile: () => setIsProfileOpen(false),
+      isProfileOpen, openProfile, closeProfile,
       isOnboardingComplete, setIsOnboardingComplete,
       currentTopic
     }}>
